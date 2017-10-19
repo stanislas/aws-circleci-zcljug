@@ -14,8 +14,8 @@
   (resp/response version/version))
 
 (defn user [request]
-  (log/info "request")
-  (resp/response (pr-str request)))
+  (log/info (pr-str request))
+  (resp/response "OK"))
 
 (defstate routes
   :start ["/"
