@@ -7,6 +7,7 @@
             [amazonica.aws.logs :as cwl]
             [amazonica.aws.route53 :as r53]
             [amazonica.aws.autoscaling :as asc]
+            [amazonica.aws.s3 :as s3]
             [cheshire.core :as json]
             [com.rpl.specter :as sp]
             [clojure.string :as str]
@@ -59,6 +60,8 @@
 (def dns-zone-name "oscillator.ch")
 (def dns-name (str project-name "." dns-zone-name))
 (def container-name project-name)
+
+(def s3-bucket-name dns-name)
 
 (def task-role-name (str project-prefix "task"))
 
@@ -297,6 +300,11 @@
 
 ;; # ECS Service and tasks
 
+(defn create-bucket [bucket-name]
+  (s3/create-bucket
+    :bucket-name bucket-name
+    :region "eu-central-1"))
+
 (defn create-task-role []
   (iam/create-role
     :role-name task-role-name
@@ -310,10 +318,15 @@
     :role-name task-role-name
     :policy-name "cloudwatch-metrics"
     :policy-document (json/encode
-                       {"Version"   "2012-10-17",
+                       {
+                        "Version"   "2012-10-17",
                         "Statement" [{"Effect"   "Allow",
-                                      "Action"   ["cloudwatch:PutMetricData"],
-                                      "Resource" ["*"]}]})))
+                                      "Action"   ["s3:ListBucket"],
+                                      "Resource" [(str "arn:aws:s3:::" s3-bucket-name)]},
+                                     {"Effect"   "Allow",
+                                      "Action"   ["s3:PutObject" "s3:GetObject"],
+                                      "Resource" [(str "arn:aws:s3:::" s3-bucket-name "/*")]}]
+                        })))
 
 (defn role-arn [role-name]
   (try
@@ -349,7 +362,8 @@
                              {:host-port      443
                               :container-port 443
                               :protocol       "tcp"}]
-        :environment        [{:name "MACHINE_NAME" :value dns-name}]
+        :environment        [{:name "MACHINE_NAME" :value dns-name}
+                             {:name "ZCLJUG_S3_BUCKET" :value s3-bucket-name}]
         :mount-points       [{:source-volume "dhparams", :container-path "/etc/nginx/dhparams"}
                              {:source-volume  "letsencrypt",
                               :container-path "/etc/letsencrypt"}]}])))

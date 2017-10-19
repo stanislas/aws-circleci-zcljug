@@ -10,7 +10,7 @@
                  [bidi "2.1.2"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  [ch.qos.logback/logback-core "1.2.3"]
-                 [com.amazonaws/aws-java-sdk-dynamodb "1.11.213"]
+                 [com.amazonaws/aws-java-sdk-s3 "1.11.213"]
                  [com.rpl/specter "1.0.3"]
                  [environ "1.1.0"]
                  [hiccup "1.0.5"]
@@ -42,6 +42,7 @@
   :profiles {:uberjar {:aot :all}
              :dev     {:dependencies   [[cheshire "5.8.0"]
                                         [com.amazonaws/aws-java-sdk "1.11.213"]]
-                       :env            {:zcljug-http-port "8876"}
+                       :env            {:zcljug-http-port "8876"
+                                        :zcljug-s3-bucket "stan-dev.oscillator.ch"}
                        :source-paths   ["src/dev/clj"]
                        :resource-paths ["src/dev/resources"]}})
