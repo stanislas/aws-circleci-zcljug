@@ -83,8 +83,8 @@
                      :user-name circleci-user-name)
         access-key (sp/select-one! [:access-key :access-key-id] result)
         secret-key (sp/select-one! [:access-key :secret-access-key] result)]
-    {:access-key access-key
-     :secret-key secret-key}))
+    {:AWS_ACCESS_KEY_ID     access-key
+     :AWS_SECRET_ACCESS_KEY secret-key}))
 
 ;; # Docker Registry
 
@@ -456,5 +456,3 @@
     :cluster ecs-cluster-name
     :service service-name
     :desired-count 0))
-
-
