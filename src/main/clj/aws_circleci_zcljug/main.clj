@@ -19,11 +19,14 @@
 (defn write-request-to-s3 [request-id request-text]
   (try
     (let [file (io/file "/tmp/" request-id)]
-      (spit file request-text)
-      (s3/put-object
-        :bucket-name config/s3-bucket
-        :key request-id
-        :file file))
+      (try
+        (spit file request-text)
+        (s3/put-object
+          :bucket-name config/s3-bucket
+          :key request-id
+          :file file)
+        (finally
+          (io/delete-file file true))))
     (catch Exception e
       (log/error e "s3 bucket error"))))
 
@@ -31,12 +34,12 @@
   (let [request-id   (str (UUID/randomUUID))
         request-text (pr-str request)]
     (log/info request-text)
-    (write-request-to-s3 request-id request-text))
-  (resp/response "OK"))
+    (write-request-to-s3 request-id request-text)
+    (resp/response request-id)))
 
 (defstate routes
   :start ["/"
-          [["version" {:get #'version}]
+          [["" {:get #'version}]
            [[:user] {:get #'user}]]])
 
 (defstate handler
