@@ -15,13 +15,10 @@ jobs:
           paths:
             - ~/.m2
       - run:
-          lein do test2junit, uberjar, doc
+          lein do test2junit
       - store_test_results:
           path: /toyon/target/test2junit/xml
           destination: junit/toyon
-      - store_artifacts:
-          path: /toyon/doc/index.html
-          destination: doc
   docker_image:
     working_directory: /toyon
     docker:
@@ -41,7 +38,8 @@ jobs:
       - deploy:
           name: build image
           command: |
-            ./circleci/deploy-image/build-and-push.sh
+            ./circleci/build/build.sh
+            ./circleci/build/push.sh
   deploy_qa:
     working_directory: /toyon
     docker:
