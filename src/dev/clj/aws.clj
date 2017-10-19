@@ -86,7 +86,6 @@
     {:access-key access-key
      :secret-key secret-key}))
 
-
 ;; # Docker Registry
 
 ;; We create an [ECR](https://aws.amazon.com/ecr/) for easy integration with the [ECS](https://aws.amazon.com/ecs/).
@@ -429,7 +428,7 @@
                                            (constantly (str (docker-repository-uri) ":" version))
                                            container-definitions))))
 
-(defn update-backend-service [version]
+(defn update-service [version]
   (ecs/update-service
     :cluster ecs-cluster-name
     :service service-name
@@ -441,18 +440,18 @@
     :repository-name repository-name
     :image-ids [{:image-tag version}]))
 
-(defn deploy-backend-service [version]
+(defn deploy-service [version]
   (image-details version)
   (update-task-definition version)
-  (update-backend-service version))
+  (update-service version))
 
-(defn start-backend-service []
+(defn start-service []
   (ecs/update-service
     :cluster ecs-cluster-name
     :service service-name
     :desired-count 1))
 
-(defn stop-backend-service []
+(defn stop-service []
   (ecs/update-service
     :cluster ecs-cluster-name
     :service service-name

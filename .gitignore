@@ -12,3 +12,4 @@ pom.xml.asc
 .idea/
 *.iml
 /src/main/clj/aws_circleci_zcljug/version.clj
+/circleci/build/app

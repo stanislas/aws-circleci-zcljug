@@ -1,0 +1,96 @@
+version: 2
+jobs:
+  build:
+    working_directory: /toyon
+    docker:
+      - image: "clojure:lein-2.7.1"
+    steps:
+      - checkout
+      - restore_cache:
+          key: toyon-{{ checksum "project.clj" }}
+      - run:
+          lein deps
+      - save_cache:
+          key:  toyon-{{ checksum "project.clj" }}
+          paths:
+            - ~/.m2
+      - run:
+          lein do test2junit, uberjar, doc
+      - store_test_results:
+          path: /toyon/target/test2junit/xml
+          destination: junit/toyon
+      - store_artifacts:
+          path: /toyon/doc/index.html
+          destination: doc
+  docker_image:
+    working_directory: /toyon
+    docker:
+      - image: "deepimpact/jessie-lein-awscli-docker:1.0.1"
+    steps:
+      - checkout
+      - restore_cache:
+          key: toyon-{{ checksum "project.clj" }}
+      - run:
+          lein uberjar
+      - save_cache:
+          key:  toyon-{{ checksum "project.clj" }}
+          paths:
+            - ~/.m2
+      - setup_remote_docker:
+          reusable: true
+      - deploy:
+          name: build image
+          command: |
+            ./circleci/deploy-image/build-and-push.sh
+  deploy_qa:
+    working_directory: /toyon
+    docker:
+      - image: "clojure:lein-2.7.1"
+    steps:
+      - checkout
+      - restore_cache:
+          key: toyon-{{ checksum "project.clj" }}
+      - deploy:
+          command: lein run -m deploy/deploy-current-release qa
+      - save_cache:
+          key:  toyon-{{ checksum "project.clj" }}
+          paths:
+            - ~/.m2
+
+workflows:
+  version: 2
+
+  build_docker_deploy:
+    jobs:
+    - build:
+        filters:
+          tags:
+            only: /release.*/
+
+    - docker_image:
+        requires:
+          - build
+        filters:
+          tags:
+            only: /release.*/
+          branches:
+            ignore: /.*/
+
+    - hold:
+        type: approval
+        requires:
+          - docker_image
+        filters:
+          tags:
+            only: /release.*/
+          branches:
+            ignore: /.*/
+
+    - deploy:
+        requires:
+          - hold
+        filters:
+          tags:
+            only: /release.*/
+          branches:
+            ignore: /.*/
