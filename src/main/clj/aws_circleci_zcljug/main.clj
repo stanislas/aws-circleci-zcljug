@@ -31,11 +31,12 @@
       (log/error e "s3 bucket error"))))
 
 (defn user [request]
-  (let [request-id   (str (UUID/randomUUID))
+  (let [user (-> request :params :user)
+        request-id   (str (UUID/randomUUID))
         request-text (pr-str request)]
     (log/info request-text)
     (write-request-to-s3 request-id request-text)
-    (resp/response request-id)))
+    (resp/response (str user " " request-id))))
 
 (defstate routes
   :start ["/"
