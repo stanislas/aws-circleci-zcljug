@@ -1,36 +1,36 @@
 version: 2
 jobs:
   build:
-    working_directory: /toyon
+    working_directory: /build
     docker:
       - image: "clojure:lein-2.7.1"
     steps:
       - checkout
       - restore_cache:
-          key: toyon-{{ checksum "project.clj" }}
+          key: build-{{ checksum "project.clj" }}
       - run:
           lein deps
       - save_cache:
-          key:  toyon-{{ checksum "project.clj" }}
+          key:  build-{{ checksum "project.clj" }}
           paths:
             - ~/.m2
       - run:
           lein do test2junit
       - store_test_results:
-          path: /toyon/target/test2junit/xml
-          destination: junit/toyon
+          path: /build/target/test2junit/xml
+          destination: junit/build
   docker_image:
-    working_directory: /toyon
+    working_directory: /build
     docker:
       - image: "deepimpact/jessie-lein-awscli-docker:1.0.1"
     steps:
       - checkout
       - restore_cache:
-          key: toyon-{{ checksum "project.clj" }}
+          key: build-{{ checksum "project.clj" }}
       - run:
           lein uberjar
       - save_cache:
-          key:  toyon-{{ checksum "project.clj" }}
+          key:  build-{{ checksum "project.clj" }}
           paths:
             - ~/.m2
       - setup_remote_docker:
@@ -40,18 +40,18 @@ jobs:
           command: |
             ./circleci/build/build.sh
             ./circleci/build/push.sh
-  deploy_qa:
-    working_directory: /toyon
+  deploy:
+    working_directory: /build
     docker:
       - image: "clojure:lein-2.7.1"
     steps:
       - checkout
       - restore_cache:
-          key: toyon-{{ checksum "project.clj" }}
+          key: build-{{ checksum "project.clj" }}
       - deploy:
-          command: lein run -m deploy/deploy-current-release qa
+          command: ./circleci/deploy/deploy.sh
       - save_cache:
-          key:  toyon-{{ checksum "project.clj" }}
+          key:  build-{{ checksum "project.clj" }}
           paths:
             - ~/.m2
 
